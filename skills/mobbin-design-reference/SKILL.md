@@ -16,7 +16,7 @@ Claude can read images from local files but cannot view URLs directly. Without t
 ### 1. Understand the query
 
 Figure out what the user is looking for. Extract:
-- **Search query** — what to search Mobbin for (e.g., "onboarding flow", "settings page", "dark mode login")
+- **Search query** — use the user's own words, or go broader. Never add specifics the user didn't mention — you'll bias results toward one pattern and miss the variety that makes this useful. For example, if the user asks for "login screens", search `login screen` — not `login screen with username and password`. The `deep` search mode already handles relevance; your job is to preserve breadth.
 - **Platform** — `ios` or `web`. Infer from context:
   - Building a Next.js/React/web app → `web`
   - Building a SwiftUI/React Native/mobile app → `ios`
@@ -51,18 +51,18 @@ Do not skip this step. Do not summarize without reading. The whole point is to v
 
 ### 5. Present findings and respond
 
-After reading all images:
+After reading all images, match your response to what the user actually asked for:
 
-- **List the screens** with app name, a brief description of what you see in the screenshot, and the Mobbin URL so the user can click through for more context:
-  ```
-  1. **N26** — Clean single-field login with biometric option. [View on Mobbin](https://mobbin.com/screens/...)
-  2. **Bluesky Social** — Social login buttons + email fallback. [View on Mobbin](https://mobbin.com/screens/...)
-  ```
-- **Then answer the user's actual question** using what you observed in the images. Compare patterns, highlight interesting approaches, call out design details — whatever the user's query demands.
+- **If the user wants patterns or analysis** → lead with the synthesis. A brief screen list with Mobbin links is useful for reference, but keep per-screen descriptions to one line. The user is here for the takeaways, not a narration of each screenshot.
+- **If the user wants inspiration or references** → lead with the screens themselves, with enough description to be useful without clicking through.
+- **If the user wants implementation help** → focus on the concrete details (spacing, colors, copy, layout) that inform code.
 
-**Ground every observation in what you actually see.** Reference concrete, specific details from the screenshots — exact copy text, element counts, color choices, layout measurements, specific icon styles, button labels. Avoid generic UX platitudes like "clean design" or "good hierarchy" unless you tie them to something visible in the image. If you recognize an app by name, resist the urge to describe what you *think* it looks like from prior knowledge — describe what the screenshot actually shows, which may differ from the app's current or well-known design.
+Include a Mobbin URL for each screen so the user can click through:
+```
+1. **N26** — Single-field login with biometric option. [View on Mobbin](https://mobbin.com/screens/...)
+```
 
-The skill does not prescribe what to do with the images beyond ensuring they're seen. The user might want analysis, comparison, implementation code, or just inspiration. Follow their lead.
+**Ground observations in what you actually see.** Reference specific details from the screenshots — copy text, element counts, colors, layout, button labels. Avoid generic UX platitudes unless tied to something visible. Describe what the screenshot shows, not what you think the app looks like from prior knowledge.
 
 ### 6. Handle "show me more" follow-ups
 
