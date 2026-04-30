@@ -89,7 +89,7 @@ Only after the user has picked a structure.
 
 The board is the main artifact; the terminal text is just a signpost pointing to it. **Do not duplicate the board's content in the terminal** — that's the trap to avoid.
 
-Self-contained static HTML file. No frameworks, no external CSS, no build step. Embed screens via `<img src>` using `image_url` from the search response — Mobbin CDN URLs work directly and expire roughly an hour later, fine for immediate viewing.
+Self-contained static HTML file. No frameworks, no external CSS, no build step. How you embed the screens depends on where the board will render — see "Choose the delivery target" below.
 
 Structure the board for what the user picked. Pattern grouping → sections with thumbnail rows beneath each. Comparison → fixed columns per app, same rows across (copy, CTA, field count, etc.). Walkthrough → horizontal sequence in flow order. Tile → loose grid, app name + thumbnail, minimal chrome. Legibility over template-matching — adapt to the query.
 
@@ -100,14 +100,39 @@ Regardless of structure:
 - **Let visuals carry the meaning, not words.** The screens are the explanation — your chrome should recede. Prefer visual cues — grouping, whitespace, consistent thumbnail sizes, subtle labels/tags, colour coding, simple callouts drawn on images — over paragraphs or long bullet lists. Section headers and one-line captions are fine; a wall of bullets is a tell that you've defaulted to text when you should've defaulted to layout. When you catch yourself writing a list explaining what screens show, try to rework it as visual structure instead.
 - Link every screen back to its Mobbin URL so the user can click through
 - Include the app name on each screen
-- Consider click-to-enlarge (a plain `<a href>` to `image_url` opening in a new tab)
+- Consider click-to-enlarge — a plain `<a href>` to `image_url` opening in a new tab. Anchors aren't restricted by `img-src`, so use the CDN URL here even in chat mode (don't inline a second base64 copy in the href).
 
-**Save and open.** Write to `./.mobbin/<slug>-<YYYYMMDD-HHMM>.html` — relative to the current working directory, not `/tmp`. Slug is a short readable description of the query (`ios-login-patterns`, `fintech-dashboards`). Create the parent directory if missing. Open in the browser after writing (`open <path>` on macOS).
+**Choose the delivery target.** Before writing the file, check where it'll render:
+
+```bash
+if [ -d /mnt/user-data/outputs ]; then
+  # Hosted environment (claude.ai chat/app). Artifact CSP blocks
+  # external img-src — must inline screens as base64.
+  TARGET=chat
+else
+  # Local environment (Claude Code, Desktop). Browser loads CDN
+  # URLs directly — keep the fast path.
+  TARGET=local
+fi
+```
+
+**If `TARGET=local`:** embed screens via `<img src>` using `image_url` from the search response — Mobbin CDN URLs work directly and expire roughly an hour later, fine for immediate viewing. Save to `./.mobbin/<slug>-<YYYYMMDD-HHMM>.html` — relative to the current working directory, not `/tmp`. Slug is a short readable description of the query (`ios-login-patterns`, `fintech-dashboards`). Create the parent directory if missing. Open in the browser after writing (`open <path>` on macOS).
+
+**If `TARGET=chat`:** inline screens as base64 data URIs, since Mobbin CDN URLs are blocked and will silently fail to load. For each `image_url`:
+
+```bash
+curl -sL "<image_url>" -o /tmp/screen-N.webp
+base64 -w 0 /tmp/screen-N.webp
+```
+
+Embed as `<img src="data:image/webp;base64,...">`. Mobbin serves WebP. If `file --mime-type` reports otherwise, match the actual type in the data URI prefix. Save to `/mnt/user-data/outputs/<slug>.html` and call `present_files` to surface it in the conversation.
+
+The board renders inline either way — the only difference is whether the bytes travel by reference (URL) or by value (base64). Detection is a heuristic on filesystem layout; if the sandbox structure ever changes, this is the line to revisit.
 
 **Then a short terminal message — that's it:**
 - One-line headline finding
 - 2-3 bullets of top-level takeaways
-- Path to the board and a note that it's open in the browser
+- Path to the board, plus a note on how it surfaces — opened in the browser (local) or presented inline (chat)
 
 The depth lives in the board; the terminal is a signpost.
 
